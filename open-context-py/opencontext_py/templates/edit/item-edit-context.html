@@ -1,0 +1,28 @@
+{% block item-context %}
+    
+{% with top_panel_num=2 %} <!-- so this is treated as a top-panel, css shoving it up -->
+{% with idprefix='par' %}
+{% with idnum=1 %}
+{% with idsuffix='context' %}
+{% with panel_label='Edit Context' %}
+{% with panel_label_suffix=False %}
+{% include 'items/accordion-group-panel-start.html' %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+<div id="edit-item-context">
+    
+</div>
+
+
+
+
+{% include 'items/accordion-group-panel-end.html' %}
+
+
+
+{% endblock %}
