@@ -158,7 +158,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.humanize',
-    'reversion',
     'opencontext_py.apps.edit.versioning',
     'opencontext_py.apps.edit.inputs.profiles',
     'opencontext_py.apps.edit.inputs.fieldgroups',
@@ -204,6 +203,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'debug_toolbar',
     'django_user_agents',
+    'reversion',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -265,12 +265,12 @@ DATABASES = {
     }
 }
 '''
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER': 'postgres',
+        'PASSWORD': 'password',
         'HOST': 'db',
         'PORT': 5432,
     }
@@ -624,6 +624,7 @@ NAV_ITEMS = [{'key': 'about',
               'always': True,
               'urls': None}]
 
+'''
 LOGGING_DIR = BASE_DIR + '/logs/'
 
 LOGGING = {
@@ -645,3 +646,4 @@ LOGGING = {
             }
         }
     }
+'''

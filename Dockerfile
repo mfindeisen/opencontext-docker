@@ -33,15 +33,21 @@ RUN ln -s /usr/include/locale.h /usr/include/xlocale.h
 RUN rm /usr/bin/gcc
 RUN ln -s /usr/bin/gcc-4.7 /usr/bin/gcc
 
+RUN mkdir /app
+WORKDIR /app
+
 # Copy requirements.txt
-COPY /open-context-py/requirements.txt /app/
+COPY /open-context-py/requirements.txt .
 
 # Install pip requirements
-RUN pip3 install -r /app/requirements.txt
+RUN pip3 install -r requirements.txt
 
 # WORKDIR /app
-COPY /open-context-py /app
+COPY /open-context-py .
+
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod 777 /usr/local/bin/docker-entrypoint.sh
 
 # create log dir for opencontext
-RUN mkdir /app/logs/
-RUN touch /app/logs/error.log
+RUN mkdir logs
+RUN touch ./logs/error.log

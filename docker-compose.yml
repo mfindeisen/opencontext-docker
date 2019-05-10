@@ -1,24 +1,37 @@
 version: '3'
 services:
   db:
-    image: postgres
+    image:  postgres
+    environment:
+      POSTGRES_PASSWORD:  password
+      POSTGRES_USER:  postgres
+    ports:  
+        - "5433:5432"
   solr:
-    image: solr:7
+    image: solr
+    build: ./solr/.
     ports:
       - "8983:8983"
-    volumes:
-      - ./solr/core/:/opt/solr/server/solr/collection1/conf/
+    #volumes:
+      #- ./solr/core/:/opt/solr/server/solr/core2
+      #- /collection1/:/opt/solr/server/solr/collection1/
+      #- /mycores:/opt/solr/server/solr/mycores
     entrypoint:
-    - bash
-    - "-c"
-    - "precreate-core collection1; exec solr -f"
+      - docker-entrypoint.sh
+      - solr-precreate
+      - collection1 /solr1_configs
+      #  /usr/local/bin/solr-entrypoint.sh
+    #- bash
+    #- "-c"
+    #- "create_core collection1 /solr1_configs; exec solr -f"
   web:
     build: .
-    command: python3 /app/manage.py createcachetable
-    command: python3 /app/manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/django-docker
+      - .:/app
     ports:
       - "8000:8000"
+    entrypoint:
+      /usr/local/bin/docker-entrypoint.sh
     depends_on:
       - db
+      - solr
