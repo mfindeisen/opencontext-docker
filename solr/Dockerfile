@@ -1,11 +1,10 @@
-FROM solr:7
- 
-#COPY solr1_configs /opt/solr/server/solr/configsets/solr1_configs
-COPY solr1_configs /opt/solr/server/solr/mycores/collection1/solr1_configs
+FROM solr:7.7.2
+
 USER root
-#RUN chown -R solr:solr /opt/solr/server/solr/configsets/solr1_configs
-RUN chown -R solr:solr /opt/solr/server/solr/mycores/collection1/solr1_configs
-COPY solr-entrypoint.sh /usr/local/bin/
-RUN chmod 777 /usr/local/bin/solr-entrypoint.sh
+RUN mkdir /opencontextCore && chown -R solr:solr /opencontextCore
+COPY --chown=solr:solr ./services-core/search/opencontextCore /opencontextCore/
+COPY --chown=solr:solr ./create-opencontextCore.sh /docker-entrypoint-initdb.d/
 USER solr
-# CMD ["/opt/solr/bin/solr", "create -c ff"]
+RUN chmod -R a+X /opencontextCore
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["solr-foreground"]

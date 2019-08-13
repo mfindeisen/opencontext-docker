@@ -28,7 +28,7 @@ RUN apt-get update && \
     nginx && \
 rm -rf /var/lib/apt/lists/*
 
-# For pip install uWSGI 
+# For uWSGI (pip)
 RUN ln -s /usr/include/locale.h /usr/include/xlocale.h
 RUN rm /usr/bin/gcc
 RUN ln -s /usr/bin/gcc-4.7 /usr/bin/gcc

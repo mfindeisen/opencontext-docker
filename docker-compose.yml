@@ -10,20 +10,10 @@ services:
   solr:
     image: solr
     build: ./solr/.
+    container_name: solr
     ports:
-      - "8983:8983"
-    #volumes:
-      #- ./solr/core/:/opt/solr/server/solr/core2
-      #- /collection1/:/opt/solr/server/solr/collection1/
-      #- /mycores:/opt/solr/server/solr/mycores
-    entrypoint:
-      - docker-entrypoint.sh
-      - solr-precreate
-      - collection1 /solr1_configs
-      #  /usr/local/bin/solr-entrypoint.sh
-    #- bash
-    #- "-c"
-    #- "create_core collection1 /solr1_configs; exec solr -f"
+     - "8983:8983"
+    restart: always
   web:
     build: .
     volumes:
