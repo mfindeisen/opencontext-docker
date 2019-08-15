@@ -28,7 +28,7 @@ services:
     expose: 
       - 8000
     entrypoint:
-      ./docker-entrypoint.sh
+      /code/docker-entrypoint.sh
     depends_on:
       - db
       - solr

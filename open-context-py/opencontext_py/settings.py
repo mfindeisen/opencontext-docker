@@ -95,7 +95,8 @@ INTERNAL_IPS =[
 ALLOWED_HOSTS = [
     '.opencontext.org',
     '127.0.0.1',
-    '0.0.0.0'
+    '0.0.0.0',
+    'localhost'
 ]
 
 # saves configuration problems

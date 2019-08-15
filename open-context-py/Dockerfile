@@ -33,8 +33,8 @@ RUN ln -s /usr/include/locale.h /usr/include/xlocale.h
 RUN rm /usr/bin/gcc
 RUN ln -s /usr/bin/gcc-4.7 /usr/bin/gcc
 
-RUN mkdir /app
-WORKDIR /app
+#RUN mkdir /app
+WORKDIR /code
 
 # Copy requirements.txt
 COPY requirements.txt .
@@ -45,11 +45,11 @@ RUN pip3 install -r requirements.txt
 # WORKDIR /app
 #COPY /open-context-py .
 
-#COPY docker-entrypoint.sh /usr/local/bin/
-#RUN chmod 777 /usr/local/bin/docker-entrypoint.sh
+COPY docker-entrypoint.sh .
+RUN chmod 777 docker-entrypoint.sh
 
 # create log dir for opencontext
 RUN mkdir logs
 RUN touch ./logs/error.log
 
-RUN pip install gunicorn
+RUN pip3 install gunicorn
