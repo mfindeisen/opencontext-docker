@@ -1,0 +1,29 @@
+{% load humanize %}
+{% block proj-persons %}
+<div class="panel panel-default top-panel">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="panel-title">Persons and Organizations</h4>
+            </div>            
+            <div class="col-sm-6 text-right">
+                <h4 class="panel-title">{{ status.manifest_summary.persons|intcomma }} items</h4>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        {% if status.project_persons|length > 0 %}
+        <h5>Persons and Organizations in the Project</h5>
+        <ul>
+        {% for man_pers in status.project_persons %}
+            <li>
+               <a href="{{ base_url }}/edit/items/{{ man_pers.uuid }}" target="_blank">{{ man_pers.label }}</a>
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+
+
+{% endblock %}
