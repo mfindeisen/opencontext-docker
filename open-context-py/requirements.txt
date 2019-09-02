@@ -74,7 +74,7 @@ Unidecode==0.4.19
 
 user-agents==1.0.1
 
-uWSGI==2.0.18
+# uWSGI==2.0.18
 
 python-memcached==1.59
 
