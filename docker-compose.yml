@@ -1,7 +1,7 @@
 version: '3'
 services:
   db:
-    image:  postgres
+    image:  postgres:13.1-alpine
     container_name: db
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -22,27 +22,29 @@ services:
     build: ./open-context-py/.
     container_name: web
     #command: gunicorn --bind 0.0.0.0:8000 opencontext_py.wsgi:application --reload
-    command: uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --http-socket :8000 --ini /src/ocweb/uwsgi_oc.ini
+    #command: uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --http-socket :8000 --ini /src/ocweb/uwsgi_oc.ini
+    #command: uwsgi --ini ./ocweb/uwsgi_oc.ini
     tty: true
     volumes:
       - ./open-context-py/:/src
       - static_data:/static/
     ports:
-      - "8000:8000"
+      - "3000:3000"
     expose: 
-      - 8000
+      - 3000
     entrypoint:
       /src/docker-entrypoint.sh
     depends_on:
       - db
       - solr
   nginx:
+    restart: always
     image: nginx:1.17
     container_name: nginx
     ports:
-      - "90:90"
+      - "80:80"
     volumes:
-      - ./open-context-py/:/src
+    #  - ./open-context-py/:/src
       - ./nginx:/etc/nginx/conf.d
       - static_data:/static/
     depends_on:

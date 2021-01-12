@@ -11,18 +11,17 @@ import os
 import sys
 import site
 
-"""
+
 # This proved very useful for getting this to work on an Ubuntu Server
 # with uWSGI.
 
 sys.path.append(os.path.dirname(__file__))
-site.addsitedir(os.path.join('/var/oc_venv',
-                             'lib/python3.4/site-packages'))
+site.addsitedir(os.path.join('/opt/venv/',
+                             'lib/python3.7/site-packages'))
 
-# from platform import python_version
-# print('If you see, Python Version:' +  python_version() + ', things are going OK.')
+from platform import python_version
+print('If you see, Python Version:' +  python_version() + ', things are going OK.')
 
-"""
 
 from django.core.wsgi import get_wsgi_application
 

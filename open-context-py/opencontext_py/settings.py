@@ -49,6 +49,17 @@ SOLR_HOST = get_secret('SOLR_HOST')
 SOLR_PORT = get_secret('SOLR_PORT')
 SOLR_COLLECTION = get_secret('SOLR_COLLECTION')
 
+# Testing (for new indices) solr connection
+# if 'SOLR_HOST_TEST' in secrets:
+#     SOLR_HOST_TEST = get_secret('SOLR_HOST_TEST')
+#     SOLR_PORT_TEST = get_secret('SOLR_PORT_TEST')
+#     SOLR_COLLECTION_TEST = get_secret('SOLR_COLLECTION_TEST')
+# else:
+#     # Default to the normal solr connection
+#     SOLR_HOST_TEST = SOLR_HOST
+#     SOLR_PORT_TEST = SOLR_PORT_TEST
+#     SOLR_COLLECTION_TEST = SOLR_COLLECTION_TEST
+
 # SECURITY WARNING: don't run with debug turned on in production!
 if get_secret('DEBUG') == 1:
     DEBUG = True
@@ -89,14 +100,12 @@ TEMPLATES = [
 ]
 
 INTERNAL_IPS =[
-    '0.0.0.0:8000'
+    'web'
 ]
 
 ALLOWED_HOSTS = [
-    '.opencontext.org',
-    '127.0.0.1',
-    '0.0.0.0',
-    'localhost'
+    'localhost',
+    '127.0.0.1'
 ]
 
 # saves configuration problems
@@ -133,6 +142,12 @@ if 'SECURE_SSL_REDIRECT' in secrets:
         DEFAULT_HTTPS = True
 
 
+# Merritt (CDL repository) seems to do strange HTTP redirects which
+# break browser display of images. This setting toggles proxying of
+# these image files. A crude solution that seems to lead to too many
+# 500 errors.
+MERRITT_IMAGE_PROXY = False
+
 # EZID Authentication and configuration
 # This is used to interact with the EZID service
 # to make and manage persistent identifiers
@@ -159,6 +174,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.humanize',
+    'reversion',
     'opencontext_py.apps.edit.versioning',
     'opencontext_py.apps.edit.inputs.profiles',
     'opencontext_py.apps.edit.inputs.fieldgroups',
@@ -174,6 +190,11 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
+    
+    # Save this for later. This is for experimental
+    # work refactoring the postgres schema
+    # 'opencontext_py.apps.all_items',
+    
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.events',
     'opencontext_py.apps.ocitems.geospace',
@@ -204,10 +225,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'debug_toolbar',
     'django_user_agents',
-    'reversion',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -253,8 +273,6 @@ SESSION_COOKIE_AGE = 7 * 24 * 60 * 60 # session expires in 1 week
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
-
-'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -263,17 +281,6 @@ DATABASES = {
         'PASSWORD': get_secret('DATABASES_PASSWORD'),
         'HOST': get_secret('DATABASES_HOST'),
         'CONN_MAX_AGE': 600,
-    }
-}
-'''
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'password',
-        'HOST': 'db',
-        'PORT': 5432,
     }
 }
 
@@ -349,7 +356,11 @@ else:
         'memory': {
             'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
             'LOCATION': '127.0.0.1:11211',
-        }
+        },
+        'local_memory': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        },
     }
 
 # user agents cache, memory cache for speed
@@ -387,15 +398,24 @@ USE_TZ = True
 # ----------------------------
 IMPORT_BATCH_SIZE = 500  # number of records to import in 1 batch
 
+# Use the normal dict get method, because we don't need to throw
+# an error if this secret does not exist.
+REFINE_URL = secrets.get(
+    'REFINE_URL', 
+    'http://127.0.0.1:3333', # The default.
+)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 if DEBUG:
     ADMIN_MEDIA_PREFIX = '/static/admin/'
     STATIC_URL = '/static/'
-    STATIC_ROOT = BASE_DIR + '/static/'
-    #STATIC_ROOT = BASE_DIR
-    STATICFILES_DIRS = ('/static/',)
+    # STATIC_ROOT = BASE_DIR + '/static/'
+    STATIC_ROOT = BASE_DIR
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, 'static'),
+        # '/static/',
+    )
     # STATIC_EXPORTS_ROOT = STATIC_ROOT + '/exports/'
     # STATIC_IMPORTS_ROOT = STATIC_ROOT + '/imports/'
     STATIC_EXPORTS_ROOT = STATIC_ROOT + '/static/exports/'
@@ -416,7 +436,7 @@ import socket
 try:
     HOSTNAME = socket.gethostname()
 except:
-    HOSTNAME = '0.0.0.0:8000'
+    HOSTNAME = 'localhost'
 
 ADMIN_EMAIL = get_secret('ADMIN_EMAIL')
 
@@ -454,11 +474,11 @@ if os.path.isfile('debug.json'):
     # get secret configuration information from the secrets.json file
     DEBUG = True
     TEMPLATE_DEBUG = True
-    DEPLOYED_HOST = 'http://0.0.0.0:8000'
+    DEPLOYED_HOST = 'http://localhost'
 elif os.path.isfile(BASE_DIR + '/debug.json'):
     DEBUG = True
     TEMPLATE_DEBUG = True
-    DEPLOYED_HOST = 'http://0.0.0.0:8000'
+    DEPLOYED_HOST = 'http://localhost'
 else:
     # do nothing, no debug file flag
     pass
@@ -496,7 +516,20 @@ if 'ZENODO_SANDBOX_TOKEN' in secrets:
     # API access / credential / authorization token for Zendo SANDBOX (testing) requests
     ZENODO_SANDBOX_TOKEN = get_secret('ZENODO_SANDBOX_TOKEN')
 else:
-    ZENODO_SANDBOX_TOKEN = None  
+    ZENODO_SANDBOX_TOKEN = None
+    
+if 'ORCID_CLIENT_ID' in secrets:
+    # ORCID service client ID.
+    ORCID_CLIENT_ID = get_secret('ORCID_CLIENT_ID')
+else:
+    ORCID_CLIENT_ID = None
+
+if 'ORCID_CLIENT_SECRET' in secrets:
+    # ORCID client secret, needed to access ORCID apis
+    ORCID_CLIENT_SECRET = get_secret('ORCID_CLIENT_SECRET')
+else:
+    ORCID_CLIENT_SECRET = None
+
 
 if 'CORS_OK_DOMAINS' in secrets:
     # password for the internet archive
@@ -622,7 +655,6 @@ NAV_ITEMS = [{'key': 'about',
               'always': True,
               'urls': None}]
 
-'''
 LOGGING_DIR = BASE_DIR + '/logs/'
 
 LOGGING = {
@@ -644,4 +676,3 @@ LOGGING = {
             }
         }
     }
-'''

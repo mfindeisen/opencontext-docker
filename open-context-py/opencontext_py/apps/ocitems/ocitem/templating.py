@@ -4,6 +4,8 @@ import datetime
 from random import randint
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
+from shapely.geometry import shape, mapping
+
 from django.conf import settings
 from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.languages import Languages
@@ -12,7 +14,9 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.entities.entity.imageproxy import proxy_image_url_if_needed
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
@@ -48,6 +52,25 @@ class TemplateItem():
     }
     
     HAS_UNIT_OF_MEASUREMENT = 'http://www.wikidata.org/wiki/Property:P3328'
+
+    # Biological Taxonomy Requirements. This dict
+    # configures how two different 
+    PREDICATES_BIO_TAXONOMIES = {
+        # NOTE: eol URIs and this predicate URI 
+        # are to be deprecated.
+        'http://purl.org/NET/biol/ns#term_hasTaxonomy': {
+            'includes': ['eol.org'],
+            'excludes': ['#gbif-sub'],
+        },
+        # NOTE: this predicate URI and GBIF uris
+        # are preferred. However, 'sheep/goat' will remain
+        # a EOL uri, but with a #gbif-sub suffix to it.
+        'http://purl.obolibrary.org/obo/FOODON_00001303': {
+            'includes': ['gbif.org', '#gbif-sub'],
+            'excludes': [],
+        },
+    }
+
 
     def __init__(self, request=False):
         self.label = False
@@ -404,7 +427,17 @@ class TemplateItem():
                     target_url = rp.convert_to_https(file_item['id'])
                     self.nexus_3d = self.make_cors_ok_url(target_url)
                     self.content['nexus_3d'] = file_item['id']
-                    
+            # Proxy broken images in Merritt if needed
+            self.content['preview'] = proxy_image_url_if_needed(
+                self.content['preview'], 
+                primary_url=self.content['fullfile'], 
+                width=650
+            )
+            self.content['thumbnail'] = proxy_image_url_if_needed(
+                self.content['thumbnail'], 
+                primary_url=self.content['fullfile'], 
+                width=150
+            )   
         elif 'rdf:HTML' in json_ld:
             # content for documents
             if self.content is False:
@@ -434,28 +467,32 @@ class TemplateItem():
             needed for user inferface
         """
         rp = RootPath()
-        if('@graph' in json_ld):
-            for g_anno in json_ld['@graph']:
-                identifier = False
-                if('@id' in g_anno):
-                    identifier = g_anno['@id']
-                elif('id' in g_anno):
-                    identifier = g_anno['id']
-                if('oc-gen:' in identifier):
-                    meta = {}
-                    if('label' in g_anno):
-                        meta['typelabel'] = g_anno['label']
-                    if('oc-gen:hasIcon' in g_anno):
-                        meta['icon'] = rp.convert_to_https(g_anno['oc-gen:hasIcon'][0]['id'])
-                    self.class_type_metadata[identifier] = meta
-        if 'category' in json_ld:
-            item_cat_labels = []
-            for cat in json_ld['category']:
-                self.item_category_uri = cat
-                if cat in self.class_type_metadata:
-                    item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
-                    if 'icon' in self.class_type_metadata[cat]:
-                        self.item_category_icon = self.class_type_metadata[cat]['icon'] 
+        for g_anno in json_ld.get('@graph', []):
+            identifier = g_anno.get(
+                '@id',
+                g_anno.get('id', False)
+            )
+            if not identifier:
+                continue
+            if identifier.startswith('oc-gen:'):
+                meta = {
+                    'typelabel': g_anno.get('label', ''),
+                    'icon': rp.convert_to_https(
+                        g_anno.get(
+                            'oc-gen:hasIcon',
+                            [{'id': ''}],
+                        )[0]['id']
+                    )
+                }
+                self.class_type_metadata[identifier] = meta
+        # Get the labels for the various categories.
+        item_cat_labels = []
+        for cat in json_ld.get('category', []):
+            self.item_category_uri = cat
+            if cat in self.class_type_metadata:
+                item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
+                if 'icon' in self.class_type_metadata[cat]:
+                    self.item_category_icon = self.class_type_metadata[cat]['icon'] 
             self.item_category_label = ', '.join(item_cat_labels)
         if self.item_category_label is False:
             # make sure the item has category label, if needed get from settings nav_items
@@ -509,6 +546,10 @@ class TemplateItem():
                 if self.project.slug is not False:
                     self.predicate_query_link += '&proj=' + self.project.slug
                     self.predicate_query_json += '&proj=' + self.project.slug
+                if self.project.parent_project_slug:
+                    # || url encoded.
+                    self.predicate_query_link += '%7C%7C' + self.project.parent_project_slug
+                    self.predicate_query_json += '%7C%7C' + self.project.parent_project_slug
         elif self.act_nav == 'types':
             if 'skos:related' in json_ld:
                 if isinstance(json_ld['skos:related'], list):
@@ -520,6 +561,10 @@ class TemplateItem():
                         if self.project.slug is not False:
                             self.type_query_link += '&proj=' + self.project.slug
                             self.type_query_json += '&proj=' + self.project.slug
+                        if self.project.parent_project_slug:
+                            # || url encoded.
+                            self.type_query_link += '%7C%7C' + self.project.parent_project_slug
+                            self.type_query_json += '%7C%7C' + self.project.parent_project_slug
 
     def create_project_hero(self, json_ld):
         """ creates a link for displaying a hero image
@@ -1119,6 +1164,9 @@ class PropValue():
                 # convert to HTTPS if needed
                 rp = RootPath()
                 self.thumbnail = rp.convert_to_https(self.thumbnail)
+                self.thumbnail = proxy_image_url_if_needed(
+                    self.thumbnail, 
+                )
                 if self.item_type == 'external-resource':
                     self.item_type = 'media'
                 if 'icons/pdf' in self.thumbnail:
@@ -1155,6 +1203,7 @@ class Project():
         self.slug = False
         self.label = False
         self.parent_project_uuid = False
+        self.parent_project_slug = False
         self.edit_status = False
         self.item_type = False
         self.view_authorized = False
@@ -1177,6 +1226,13 @@ class Project():
                             project = ModProject.objects.get(uuid=self.uuid)
                             self.edit_status = project.edit_status
                             self.parent_project_uuid = project.project_uuid
+                            parent_proj = None
+                            if self.parent_project_uuid != self.uuid:
+                                parent_proj = Manifest.objects.filter(
+                                    uuid=self.parent_project_uuid
+                                ).first()
+                            if parent_proj:
+                                self.parent_project_slug = parent_proj.slug
                             self.get_proj_geo_metadata(project)
                         except ModProject.DoesNotExist:
                             project = False
@@ -1349,9 +1405,20 @@ class GeoMap():
                                 geo_props['location-precision'] = abs(self.proj_geo_specificity)
                                 geo_props['location-precision-note'] = sec_note
                                 gmt = GlobalMercator()
-                                geotile = gmt.lat_lon_to_quadtree(feature['geometry']['coordinates'][1],
-                                                                  feature['geometry']['coordinates'][0],
-                                                                  abs(self.proj_geo_specificity))
+                                if feature['geometry']['type'] == 'Point':
+                                    geotile = gmt.lat_lon_to_quadtree(
+                                        feature['geometry']['coordinates'][1],
+                                        feature['geometry']['coordinates'][0],
+                                        abs(self.proj_geo_specificity)
+                                    )
+                                else:
+                                    geom = shape(feature['geometry'])
+                                    g_centroid = list(geom.centroid.coords)
+                                    geotile = gmt.lat_lon_to_quadtree(
+                                        g_centroid[0][1],
+                                        g_centroid[0][0],
+                                        abs(self.proj_geo_specificity)
+                                    ) 
                                 tile_bounds = gmt.quadtree_to_lat_lon(geotile)
                                 item_polygon = Polygon([[(tile_bounds[1], tile_bounds[0]),
                                                          (tile_bounds[1], tile_bounds[2]),
@@ -1446,25 +1513,29 @@ class LinkedData():
                                             # makes sure we've got unique string literals
                                             act_annotation['literals'].append(act_val['xsd:string'])
                                     else:
-                                        if 'id' in act_val:
-                                            act_type_oc_id = act_val['id']
-                                            if act_type_oc_id in self.linked_types:
-                                                act_types = self.linked_types[act_type_oc_id]
-                                                for act_type in act_types:
-                                                    if act_type['id'] not in act_annotation['objects']:
-                                                        # makes sure we've got unique objects
-                                                        act_annotation['objects'][act_type['id']] = act_type
-                                            else:
-                                                act_type = act_val
-                                                if self.project.label is False:
-                                                    act_type['vocab_uri'] = settings.CANONICAL_HOST
-                                                    act_type['vocabulary'] = settings.CANONICAL_SITENAME
-                                                else:
-                                                    act_type['vocab_uri'] = self.project.uri
-                                                    act_type['vocabulary'] = settings.CANONICAL_SITENAME + ' :: ' + self.project.label
-                                                if act_type['id'] not in act_annotation['oc_objects']:
+                                        if not 'id' in act_val:
+                                            continue
+                                        act_type_oc_id = act_val['id']
+                                        if act_type_oc_id in self.linked_types:
+                                            act_types = self.linked_types[act_type_oc_id]
+                                            for act_type in act_types:
+                                                if not biological_taxonomy_validation(
+                                                    link_pred['id'], act_type['id']):
+                                                    continue
+                                                if act_type['id'] not in act_annotation['objects']:
                                                     # makes sure we've got unique objects
-                                                    act_annotation['oc_objects'][act_type['id']] = act_type
+                                                    act_annotation['objects'][act_type['id']] = act_type
+                                        else:
+                                            act_type = act_val
+                                            if self.project.label is False:
+                                                act_type['vocab_uri'] = settings.CANONICAL_HOST
+                                                act_type['vocabulary'] = settings.CANONICAL_SITENAME
+                                            else:
+                                                act_type['vocab_uri'] = self.project.uri
+                                                act_type['vocabulary'] = settings.CANONICAL_SITENAME + ' :: ' + self.project.label
+                                            if act_type['id'] not in act_annotation['oc_objects']:
+                                                # makes sure we've got unique objects
+                                                act_annotation['oc_objects'][act_type['id']] = act_type
                                 else:
                                     if act_val not in act_annotation['literals']:
                                         # makes sure we've got unique value literals
@@ -1749,4 +1820,3 @@ class LinkedData():
         else:
             query = 'prop=' + predicate + '---' + obj
         return query
-
