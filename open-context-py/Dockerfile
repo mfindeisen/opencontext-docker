@@ -57,17 +57,18 @@ rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 
 # create log dir for opencontext
-#RUN mkdir logs
-#RUN touch error.log ./logs
+RUN mkdir logs
+RUN touch error.log ./logs
 #RUN touch /src/logs/error.log
-
-
 
 # Copy requirements.txt
 COPY requirements.txt .
 
+# update pip
+RUN /opt/venv/bin/python3 -m pip install --upgrade pip
+
 # Install pip requirements
-RUN pip3 install -r requirements.txt
+RUN /opt/venv/bin/python3 -m pip install -r requirements.txt
 
 # WORKDIR /app
 #COPY /open-context-py .
@@ -75,7 +76,7 @@ RUN pip3 install -r requirements.txt
 COPY docker-entrypoint.sh .
 RUN chmod 777 docker-entrypoint.sh
 
-RUN pip3 install uwsgi
+RUN /opt/venv/bin/python3 -m pip install uwsgi
 
 RUN export PYTHON=python3.7
 RUN uwsgi --build-plugin "/usr/src/uwsgi/plugins/python python37"
