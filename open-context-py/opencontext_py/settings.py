@@ -454,7 +454,7 @@ if get_secret('DEPLOYED_HOST') == 1:
 else:
     TO_DEPLOYED_URIS = False
 
-CANONICAL_HOST = 'http://opencontext.org'
+CANONICAL_HOST = 'http://localhost'
 CANONICAL_SITENAME = 'Open Context'
 TWITTER_SITE = '@opencontext'
 if 'HOST_TAGLINE' in secrets:
