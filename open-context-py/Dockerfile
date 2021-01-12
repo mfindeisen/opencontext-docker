@@ -57,8 +57,8 @@ rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 
 # create log dir for opencontext
-RUN mkdir logs
-RUN touch error.log ./logs
+#RUN mkdir logs
+#RUN touch error.log ./logs
 #RUN touch /src/logs/error.log
 
 # Copy requirements.txt
