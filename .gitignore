@@ -1,3 +1,10 @@
 __pycache__/
 *.py[cod]
 static/
+.DS_Store
+open-context-py/.uwsgi_plugins_builder
+admin/
+debug_toolbar/
+logs/
+oc/
+uwsgi.pid
