@@ -26,4 +26,7 @@ shell-db:
 	docker exec -ti db /bin/sh -c "[ -e /bin/bash ] && /bin/bash || /bin/sh"
 
 collectstatic:
-	docker exec web /bin/sh -c "python manage.py collectstatic --noinput" 
+	docker exec web /bin/sh -c "/opt/venv/bin/python3 manage.py collectstatic --noinput"
+
+createsuperuser:
+	docker exec -it web /bin/bash -c "/opt/venv/bin/python3 manage.py createsuperuser"

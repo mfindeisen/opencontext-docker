@@ -411,9 +411,9 @@ if DEBUG:
     ADMIN_MEDIA_PREFIX = '/static/admin/'
     STATIC_URL = '/static/'
     STATIC_ROOT = '/src/static/'
-    STATICFILES_DIRS = (
-        os.path.join(BASE_DIR, 'static'),
-    )
+    #STATICFILES_DIRS = (
+    #    os.path.join(BASE_DIR, 'static'),
+    #)
     STATIC_EXPORTS_ROOT = STATIC_ROOT + '/exports/'
     STATIC_IMPORTS_ROOT = STATIC_ROOT + '/imports/'
     STATIC_EXPORTS_ROOT = STATIC_ROOT + '/static/exports/'
