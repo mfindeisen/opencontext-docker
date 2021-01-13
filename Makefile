@@ -30,3 +30,6 @@ collectstatic:
 
 createsuperuser:
 	docker exec -it web /bin/bash -c "/opt/venv/bin/python3 manage.py createsuperuser"
+
+log-uwsgi:
+	docker exec -it web /bin/bash -c "cat /tmp/uwsgi_oc.log" 
