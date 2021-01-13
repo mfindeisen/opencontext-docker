@@ -21,13 +21,10 @@ services:
     restart: always
     build: ./open-context-py/.
     container_name: web
-    #command: gunicorn --bind 0.0.0.0:8000 opencontext_py.wsgi:application --reload
-    #command: uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --http-socket :8000 --ini /src/ocweb/uwsgi_oc.ini
-    #command: uwsgi --ini ./ocweb/uwsgi_oc.ini
     tty: true
     volumes:
       - ./open-context-py/:/src
-      - static_data:/static/
+      - static_data:/src/static/
     ports:
       - "3000:3000"
     expose: 
@@ -44,9 +41,9 @@ services:
     ports:
       - "80:80"
     volumes:
-    #  - ./open-context-py/:/src
+      - ./open-context-py/:/src
       - ./nginx:/etc/nginx/conf.d
-      - static_data:/static/
+      - static_data:/src/static/
     depends_on:
       - web
   #redis:
