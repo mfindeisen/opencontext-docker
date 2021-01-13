@@ -32,7 +32,7 @@ class Manifest(models.Model):
     indexed = models.DateTimeField(blank=True, null=True)
     vcontrol = models.DateTimeField(blank=True, null=True)
     archived = models.DateTimeField(blank=True, null=True)
-    published = models.DateTimeField(db_index=True)
+    published = models.DateTimeField(blank=True, null=True, db_index=True)
     revised = models.DateTimeField(db_index=True)
     record_updated = models.DateTimeField(auto_now=True)
     localized_json = JSONField(default={},
