@@ -5,7 +5,9 @@ Run ```sh download_static_files.sh``` inside ```open-context-py``` first to down
 
 Run ```make build``` and ```make up```
 
-A local instance of opencontext should now run at localhost:80
+A local instance of opencontext should now run at localhost:80.
+
+Run ```make createsuperuser``` to create a Django superuser.
 
 ---
 # TODO
