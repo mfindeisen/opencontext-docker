@@ -305,7 +305,8 @@ if DEBUG:
         },
         'redis': {
             'BACKEND': 'redis_cache.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
+            #'LOCATION': 'redis://127.0.0.1:6379/1',
+            'LOCATION': 'redis://redis:6379/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
             'OPTIONS': {
                 'MAX_ENTRIES': 1000
