@@ -65,7 +65,9 @@ RUN git clone https://github.com/ekansa/open-context-py.git .
 #RUN touch /src/logs/error.log
 
 # Copy requirements.txt
-COPY requirements.txt .
+#COPY requirements.txt .
+
+COPY config/secrets.json .
 
 # update pip
 RUN /opt/venv/bin/python3 -m pip install --upgrade pip
@@ -76,8 +78,12 @@ RUN /opt/venv/bin/python3 -m pip install -r requirements.txt
 # WORKDIR /app
 #COPY /open-context-py .
 
-COPY docker-entrypoint.sh .
-RUN chmod 777 docker-entrypoint.sh
+COPY config/docker-entrypoint.sh .
+RUN chmod 777 config/docker-entrypoint.sh
+
+COPY config/logs .
+
+COPY config/ocweb .
 
 RUN /opt/venv/bin/python3 -m pip install uwsgi
 
