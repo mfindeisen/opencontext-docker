@@ -56,6 +56,9 @@ rm -rf /var/lib/apt/lists/*
 #RUN mkdir /app
 WORKDIR /src
 
+# clone open-context-py repository
+RUN git clone https://github.com/ekansa/open-context-py.git .
+
 # create log dir for opencontext
 #RUN mkdir logs
 #RUN touch error.log ./logs
