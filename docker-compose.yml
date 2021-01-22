@@ -19,18 +19,18 @@ services:
     restart: always
   web:
     restart: always
-    build: ./open-context-py/.
+    build: ./open_context/.
     container_name: web
     tty: true
     volumes:
-      - ./open-context-py/:/src
+      - ./open_context/:/src
       - static_data:/src/static/
     ports:
       - "3000:3000"
     expose: 
       - 3000
     entrypoint:
-      /src/docker-entrypoint.sh
+      /usr/local/bin/docker-entrypoint.sh
     depends_on:
       - db
       - solr
@@ -41,7 +41,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./open-context-py/:/src
+      - ./open_context/:/src
       - ./nginx:/etc/nginx/conf.d
       - static_data:/src/static/
     depends_on:

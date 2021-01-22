@@ -1,1 +1,0 @@
-wget --recursive --no-host-directories --no-parent -R ./open-context-py/static/ https://opencontext.org/static/
