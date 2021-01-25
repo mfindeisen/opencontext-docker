@@ -19,7 +19,7 @@ services:
     restart: always
   web:
     restart: always
-    build: ./open_context/.
+    build: ./.
     container_name: web
     tty: true
     volumes:
