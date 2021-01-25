@@ -61,8 +61,8 @@ RUN /opt/venv/bin/python3 -m pip install --upgrade pip
 # Install pip requirements
 RUN /opt/venv/bin/python3 -m pip install -r requirements.txt
 
-COPY /open_context/docker-entrypoint.sh .
-RUN chmod 777 docker-entrypoint.sh
+COPY /open_context/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 777 /usr/local/bin/docker-entrypoint.sh
 
 RUN /opt/venv/bin/python3 -m pip install uwsgi
 
